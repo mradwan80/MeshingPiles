@@ -472,8 +472,8 @@ void main()
 
 	std::string file_stem = "lion";
 	double minx, maxx, miny, maxy;
-	minx = 0.0; maxx = 1.0;
-	miny = 0.0; maxy = 1.0;
+	minx = 0.0; maxx = 10000.0;
+	miny = 0.0; maxy = 10000.0;
 	int GlobalW = 1024;
 	int GlobalH = 1024;
 
@@ -625,6 +625,106 @@ bool TrigHasTwoVxs(Triangle trig, int v0, int v1, int& third)
 	}
 
 	return false;
+}
+
+void FindNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& triangles)
+{
+	vector<bool>VxIsMf(points.size(), true);
+
+	vector<vector<int>>vxToTrigs(points.size());
+	for (int t = 0; t < triangles.size(); t++)
+	{
+		vxToTrigs[triangles[t].v0].push_back(t);
+		vxToTrigs[triangles[t].v1].push_back(t);
+		vxToTrigs[triangles[t].v2].push_back(t);
+	}
+
+	
+	vector<TrigEdge>edges; edges.reserve(3 * triangles.size());
+	for (int t = 0; t < triangles.size(); t++)
+	{
+		TrigEdge te;
+
+		te.v2 = triangles[t].v2;
+		if (triangles[t].v0 < triangles[t].v1)
+		{
+			te.v0 = triangles[t].v0;
+			te.v1 = triangles[t].v1;
+		}
+		else
+		{
+			te.v0 = triangles[t].v1;
+			te.v1 = triangles[t].v0;
+		}
+		edges.push_back(te);
+
+		te.v2 = triangles[t].v0;
+		if (triangles[t].v1 < triangles[t].v2)
+		{
+			te.v0 = triangles[t].v1;
+			te.v1 = triangles[t].v2;
+		}
+		else
+		{
+			te.v0 = triangles[t].v2;
+			te.v1 = triangles[t].v1;
+		}
+		edges.push_back(te);
+
+		te.v2 = triangles[t].v1;
+		if (triangles[t].v0 < triangles[t].v2)
+		{
+			te.v0 = triangles[t].v0;
+			te.v1 = triangles[t].v2;
+		}
+		else
+		{
+			te.v0 = triangles[t].v2;
+			te.v1 = triangles[t].v0;
+		}
+		edges.push_back(te);
+	}
+
+	std::sort(edges.begin(), edges.end());
+
+
+	int NonManifoldEdgesNum = 0;
+	int EdgeRep = 0;
+	int oldv0 = -1, oldv1 = -1;
+	int EdgeOnMoreThanFour = 0;
+	int EdgeOnOdd = 0;
+	for (int i = 0; i < edges.size(); i++)
+	{
+		if (i % 100 == 0)
+			cout << "edge " << i << " out of " << edges.size() << "\n";
+
+		if (edges[i].v0 != oldv0 || edges[i].v1 != oldv1)
+		{
+			oldv0 = edges[i].v0;
+			oldv1 = edges[i].v1;
+
+			EdgeRep = 1;
+		}
+		else
+		{
+			EdgeRep++;
+			if (EdgeRep > 2)
+			{
+				VxIsMf[edges[i].v0] = false;
+				VxIsMf[edges[i].v1] = false;
+			}
+		}
+	}
+
+	int NonMfVxs = 0;
+	for (int p = 0; p < points.size(); p++)
+	{
+		if (!VxIsMf[p])
+			NonMfVxs++;
+	}
+
+	int u = 3;
+
 }
 
 void FixNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& triangles)
@@ -1322,8 +1422,9 @@ void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, co
 	TriangulateFaces(pilesFaces, points, triangles);
 	cout << "triangulating faces ended\n";
 
-	FixNonManifoldEdges(points, triangles);
+	//FixNonManifoldEdges(points, triangles);
 
+	FindNonManifoldEdges(points, triangles);
 
 	CheckConnectedComponents(points.size(), triangles);
 
