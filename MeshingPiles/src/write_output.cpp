@@ -34,13 +34,13 @@ void visualizeOriginalPiles(std::string file_stem, int GlobalW, int GlobalH, dou
 
 			oplyfile << x1 << " " << y1 << " " << zstart << "\n";
 			oplyfile << x2 << " " << y1 << " " << zstart << "\n";
-			oplyfile << x1 << " " << y2 << " " << zstart << "\n";
 			oplyfile << x2 << " " << y2 << " " << zstart << "\n";
+			oplyfile << x1 << " " << y2 << " " << zstart << "\n";
 
 			oplyfile << x1 << " " << y1 << " " << zend << "\n";
 			oplyfile << x2 << " " << y1 << " " << zend << "\n";
-			oplyfile << x1 << " " << y2 << " " << zend << "\n";
 			oplyfile << x2 << " " << y2 << " " << zend << "\n";
+			oplyfile << x1 << " " << y2 << " " << zend << "\n";
 		}
 	}
 	int offset = 0;

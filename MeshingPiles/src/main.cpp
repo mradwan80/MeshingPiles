@@ -15,6 +15,7 @@ void main()
 
 	//hard coded input
 	/*std::string file_stem = "example9";
+	bool reverse = false;
 	double minx, maxx, miny, maxy;
 	minx = 0.5; maxx = 449.5;
 	miny = 0.5; maxy = 449.5; //double miny = -60.0, maxy = 60.0;
@@ -23,6 +24,7 @@ void main()
 
 
 	/*std::string file_stem = "bunny2";
+	bool reverse = true;
 	double minx, maxx, miny, maxy;
 	minx = 0.0; maxx = 1.0;
 	miny = 0.0; maxy = 1.0;
@@ -30,6 +32,7 @@ void main()
 	int GlobalH = 1024;*/
 
 	std::string file_stem = "lion";
+	bool reverse = true;
 	double minx, maxx, miny, maxy;
 	minx = 0.0; maxx = 10000.0;
 	miny = 0.0; maxy = 10000.0;
@@ -51,6 +54,16 @@ void main()
 
 	//read points, and calc other vars
 	readPiles(file_stem, cellsNum, PilesNum, PilesCount, PilesOffset, Piles); //in future, should read points, and compute DDS
+
+	if (reverse)
+	{
+
+		for (int cell = 0; cell < cellsNum; cell++)
+		{
+			if (PilesCount[cell] > 1)
+				std::reverse(Piles.begin() + PilesOffset[cell], Piles.begin() + PilesOffset[cell] + PilesCount[cell]);
+		}
+	}
 
 	//create and fill my own structs. (***) not sure if they are going to be of any importance !!! for now, only good for visualizing original piles
 	vector<vector<PileStruct>>cellsPiles(cellsNum);
