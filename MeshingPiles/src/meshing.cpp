@@ -340,9 +340,9 @@ void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, co
 	TriangulateFaces(pilesFaces, points, triangles);
 	cout << "triangulating faces ended\n";
 
-	//FixNonManifoldEdges(points, triangles);
+	//FindNonManifoldEdges(points, triangles);
 
-	FindNonManifoldEdges(points, triangles);
+	FixNonManifoldEdges(points, triangles);
 
 	CheckConnectedComponents(points.size(), triangles);
 
@@ -921,6 +921,8 @@ void FindNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& tria
 			NonMfVxs++;
 	}
 
+	cout << "the non manifold edges affect " << NonMfVxs << " vxs\n";
+
 	int u = 3;
 
 }
@@ -1007,7 +1009,7 @@ void FixNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& trian
 				int v0 = oldv0;
 				int v1 = oldv1;
 
-				vector<int>TrigsToChange;
+				vector<int>TrigsToChange;	//will contain an umbrella of trigs around v0
 
 				int fixed = v0; int othervx = v1;
 
@@ -1016,7 +1018,7 @@ void FixNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& trian
 				for (int vt = 0; vt < vxToTrigs[fixed].size() && !stop; vt++)
 				{
 					tindex = vxToTrigs[fixed][vt];
-					stop = TrigHasTwoVxs(triangles[tindex], fixed, othervx, movable);
+					stop = TrigHasTwoVxs(triangles[tindex], fixed, othervx, movable); //find a trig with fixed and othervx, and return the third in movable
 				}
 				TrigsToChange.push_back(tindex);
 				int firstmovable = movable;
@@ -1032,14 +1034,14 @@ void FixNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& trian
 					{
 						//get using fixed, movable, avoided
 						tindex = vxToTrigs[fixed][vt];
-						found = TrigHasTwoVxsNotThird(triangles[tindex], fixed, movable, avoided, third);
+						found = TrigHasTwoVxsNotThird(triangles[tindex], fixed, movable, avoided, third); //find a trig with fixed and movable, but not avoied, and return the third vx of such trig
 					}
 					TrigsToChange.push_back(tindex);
 
 					avoided = movable;
 					movable = third;
 
-					if (third == othervx)
+					if (third == othervx)			//add it, but stop
 						OtherTrigFound = true;
 				}
 
@@ -1057,6 +1059,65 @@ void FixNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& trian
 						triangles[TrigsToChange[j]].v2 = newv0;
 				}
 
+				///////////////////////
+				//////////////////////
+				/////////////////////
+				//fixing the other vertex
+				////////////////////
+				///////////////////
+
+				
+				{
+					TrigsToChange.clear();
+
+					fixed = v1; othervx = newv0;
+
+					stop = false;
+					for (int vt = 0; vt < vxToTrigs[fixed].size() && !stop; vt++)
+					{
+						tindex = vxToTrigs[fixed][vt];
+						stop = TrigHasTwoVxs(triangles[tindex], fixed, othervx, movable); //find a trig with fixed and othervx, and return the third in movable
+					}
+					TrigsToChange.push_back(tindex);
+					firstmovable = movable;
+
+					avoided = newv0;
+					OtherTrigFound = false;
+					while (!OtherTrigFound)
+					{
+						int third;
+						bool found = false;
+						int tindex;
+						for (int vt = 0; vt < vxToTrigs[fixed].size() && !found; vt++)
+						{
+							//get using fixed, movable, avoided
+							tindex = vxToTrigs[fixed][vt];
+							found = TrigHasTwoVxsNotThird(triangles[tindex], fixed, movable, avoided, third); //find a trig with fixed and movable, but not avoied, and return the third vx of such trig
+						}
+						TrigsToChange.push_back(tindex);
+
+						avoided = movable;
+						movable = third;
+
+						if (third == othervx)			//add it, but stop
+							OtherTrigFound = true;
+					}
+
+
+					int newv1 = points.size();
+					points.push_back(points[v1]);
+
+					for (int j = 0; j < TrigsToChange.size(); j++)
+					{
+						if (triangles[TrigsToChange[j]].v0 == v1)
+							triangles[TrigsToChange[j]].v0 = newv1;
+						if (triangles[TrigsToChange[j]].v1 == v1)
+							triangles[TrigsToChange[j]].v1 = newv1;
+						if (triangles[TrigsToChange[j]].v2 == v1)
+							triangles[TrigsToChange[j]].v2 = newv1;
+					}
+				}
+				
 			}
 			oldv0 = edges[i].v0;
 			oldv1 = edges[i].v1;
