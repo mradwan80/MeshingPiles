@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <stack>
 #include <set>
@@ -13,6 +14,12 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "DDSstuff.h" //should be replaced by DDS.h later
 using namespace std;
+
+struct VxDiagonalGroups
+{
+	int pile1, face1, face2;
+	int pile2, face3, face4;
+};//group1: (pile1,face1), (pile2, face3). group2: (pile1,face2),(pile2,face4)
 
 struct Pixel
 {
@@ -26,6 +33,9 @@ struct Pixel
 	void SetCoordinates(int xx, int yy);
 
 	int ComputeIndex(int w, int h);
+
+	int GetX();
+	int GetY();
 
 	bool ContainsPiles();
 
@@ -48,6 +58,10 @@ struct Pixel
 	static int GetFacingFace(const Pixel& pixel1, const Pixel& pixel2);
 
 	static bool CoordsWithinRange(int x, int y, int w, int h);
+	static bool CoordsWithinRange(int index, int w, int h);
+
+	static int GetX(int index, int w, int h);
+	static int GetY(int index, int w, int h);
 
 };
 
@@ -74,6 +88,7 @@ struct Face
 {
 	int v0, v1, v2, v3;
 	Edge e0, e1;
+	int pile = -1, face = -1; //auxiliary. help in fixing non manifold edges and vxs
 
 	void FillVerticesFromEdgesToEdges(set<int>& E0, set<int>& E1, vector<PointCoordsExt>& points);
 };
@@ -81,6 +96,7 @@ struct Face
 struct Triangle
 {
 	int v0, v1, v2;
+	int pile = -1, face = -1; //auxiliary. help in fixing non manifold edges and vxs
 
 	static void Triangulate(const Face& fc, vector<Triangle>& triangles);
 };
@@ -95,6 +111,8 @@ struct TrigEdge
 
 //specific for ortho projection//
 void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, float left, float right, float bottom, float top, vector<PointCoordsExt>& points, vector<Triangle>& triangles);
+
+void detectNonManifoldVertices(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vector<Pixel>& pixels, vector<int>& firstOccurance, const int w, const int h, std::map<int, VxDiagonalGroups>& groups);
 
 //idea: moave to another vector, along with their indices. define how to compare (x,y,z) then index. sort. search for duplicates, all refer to first.
 void findDuplicates(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, vector<int>& firstOccurance);
@@ -123,6 +141,8 @@ bool TrigHasTwoVxs(Triangle trig, int v0, int v1, int& third);
 void FindNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& triangles);
 
 void FixNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& triangles);
+
+void FixNonManifolds(vector<PointCoordsExt>& points, vector<Triangle>& triangles, std::map<int, VxDiagonalGroups>& groups);
 
 void CheckConnectedComponents(int pnum, vector<Triangle>& triangles);
 

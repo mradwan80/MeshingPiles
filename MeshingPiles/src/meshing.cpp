@@ -19,6 +19,26 @@ int Pixel::ComputeIndex(int w, int h)
 	return y * w + x;
 }
 
+int Pixel::GetX()
+{
+	return x;
+}
+
+int Pixel::GetY()
+{
+	return y;
+}
+
+int Pixel::GetX(int index, int w, int h)
+{
+	return index % w;
+}
+
+int Pixel::GetY(int index, int w, int h)
+{
+	return index / w;
+}
+
 bool Pixel::ContainsPiles()
 {
 	return PilesCount > 0;
@@ -149,6 +169,13 @@ bool Pixel::CoordsWithinRange(int x, int y, int w, int h)
 	return (x >= 0 && x < w&& y >= 0 && y < h);
 }
 
+bool Pixel::CoordsWithinRange(int index, int w, int h)
+{
+	int x = Pixel::GetX(index, w, h);
+	int y = Pixel::GetY(index, w, h);
+	return CoordsWithinRange(x, y, w, h);
+}
+
 ////////
 //struct PointCoordsExt
 ////////
@@ -256,12 +283,12 @@ void Triangle::Triangulate(const Face& fc, vector<Triangle>& triangles)
 		//triangulate with base0,base1,ptr0,ptr1//
 		if (base1 != ptr1)
 		{
-			Triangle t{ fc.e0.epoints[base0] , fc.e1.epoints[ptr1], fc.e1.epoints[base1] };
+			Triangle t{ fc.e0.epoints[base0] , fc.e1.epoints[ptr1], fc.e1.epoints[base1], fc.pile, fc.face };
 			triangles.push_back(t);
 		}
 		if (base0 != ptr0)
 		{
-			Triangle t{ fc.e0.epoints[base0], fc.e0.epoints[ptr0], fc.e1.epoints[ptr1] };
+			Triangle t{ fc.e0.epoints[base0], fc.e0.epoints[ptr0], fc.e1.epoints[ptr1], fc.pile, fc.face };
 			triangles.push_back(t);
 		}
 
@@ -303,6 +330,15 @@ void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, co
 	findDuplicates(points, Piles, pixels, w, h, firstOccurance);
 	cout << "finding duplicates ended\n";
 
+	/////////////////////////////////
+	//finding non manifold vertices//
+	/////////////////////////////////
+
+	std::map<int, VxDiagonalGroups> groups;
+	detectNonManifoldVertices(points, Piles, pixels, firstOccurance, w, h, groups);
+
+	VxDiagonalGroups g = groups[100000];
+
 	/////////////////
 	//now the faces//
 	/////////////////
@@ -342,7 +378,9 @@ void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, co
 
 	//FindNonManifoldEdges(points, triangles);
 
-	FixNonManifoldEdges(points, triangles);
+	//FixNonManifoldEdges(points, triangles);
+
+	FixNonManifolds(points, triangles, groups);
 
 	CheckConnectedComponents(points.size(), triangles);
 
@@ -360,6 +398,112 @@ void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, co
 
 }
 
+
+void detectNonManifoldVertices(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vector<Pixel>& pixels, vector<int>& firstOccurance, const int w, const int h, std::map<int, VxDiagonalGroups>& groups)
+{
+	for (int pixelIndex = 0; pixelIndex < w * h; pixelIndex++)
+	{
+
+		if (!pixels[pixelIndex].ContainsPiles())
+			continue;
+
+		/////////////////////
+		//check 4 cross nbs//
+		/////////////////////
+
+		vector<int>nbpixels;
+		pixels[pixelIndex].GetCrossNbs(pixels, w, h, nbpixels, false);
+
+
+		//piles of current pixel//
+		for (int pilePixelIndex = 0; pilePixelIndex < pixels[pixelIndex].PilesCount; pilePixelIndex++)
+		{
+
+			int pileIndex = pixels[pixelIndex].PilesOffset + pilePixelIndex;
+
+			float zmin = Piles[pileIndex].start;
+			float zmax = Piles[pileIndex].end;
+
+			//for each neibor pixel, we should consider two vertices of the orig pile against all piles
+			//the one pile that intersect, should share in creating the group. but piles should be less in index
+
+			for (int nb = 0; nb < nbpixels.size(); nb++)
+			{
+
+				int nbpixelIndex = nbpixels[nb];
+
+				if (!Pixel::CoordsWithinRange(nbpixelIndex, w, h) || !pixels[nbpixelIndex].ContainsPiles())
+					continue;
+
+				int v0, v1;
+				VxDiagonalGroups g;
+				g.pile1 = pileIndex; //g.pile2 is filled later, if at all
+
+				//find 2 vxs of the pile, and faces of the two piles
+				v0 = pileIndex * 8 + nb; v1 = v0 + 4;
+				v0 = firstOccurance[v0]; v1 = firstOccurance[v1];
+
+				g.face1 = nb - 1; g.face2 = nb;
+				if (g.face1 < 0)g.face1 = 3;
+				if (nb == 0)
+				{
+					g.face1 = 3; g.face2 = 0;
+					g.face3 = 2; g.face4 = 1;
+				}
+				else if (nb == 1)
+				{
+					g.face1 = 0; g.face2 = 1;
+					g.face3 = 3; g.face4 = 2;
+				}
+				else if (nb == 2)
+				{
+					g.face1 = 1; g.face2 = 2;
+					g.face3 = 0; g.face4 = 3;
+				}
+				else if (nb == 3)
+				{
+					g.face1 = 2; g.face2 = 3;
+					g.face3 = 1; g.face4 = 0;
+				}
+
+				//loop over piles of nb
+				bool v0intersect = false, v1intersect = false;
+				for (int nbpilePixelIndex = 0; nbpilePixelIndex < pixels[nbpixelIndex].PilesCount; nbpilePixelIndex++) //go through each pile of the nb pixel
+				{
+
+					int nbpileIndex = pixels[nbpixelIndex].PilesOffset + nbpilePixelIndex;
+
+					if (nbpileIndex < pileIndex)
+						continue;
+
+					g.pile2 = nbpileIndex;
+
+					if (Piles[nbpileIndex].start <= zmin && zmin <= Piles[nbpileIndex].end)
+					{
+						if (v0intersect)
+							zmin = zmin;
+
+						groups.insert(std::make_pair(v0, g));
+
+						v0intersect = true;
+					}
+
+					if (Piles[nbpileIndex].start <= zmax && zmax <= Piles[nbpileIndex].end)
+					{
+						if (v1intersect)
+							zmax = zmax;
+
+						groups.insert(std::make_pair(v1, g));
+
+						v1intersect = true;
+					}
+
+				}
+			}
+		}
+
+	}
+}
 
 //idea: moave to another vector, along with their indices. define how to compare (x,y,z) then index. sort. search for duplicates, all refer to first.
 void findDuplicates(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, vector<int>& firstOccurance)
@@ -638,6 +782,8 @@ void CreateFaces(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vect
 				fc.v1 = firstOccurance[vxoffset + v1];
 				fc.v2 = firstOccurance[vxoffset + v0 + 4];
 				fc.v3 = firstOccurance[vxoffset + v1 + 4];
+				fc.pile = pileIndex;
+				fc.face = nb; //from 0 to 3
 
 				vector<Face>FaceSubFaces;
 
@@ -678,6 +824,8 @@ void CreateFaces(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vect
 							newface.v1 = fc.v1;
 							newface.v2 = nbfc.v0;
 							newface.v3 = nbfc.v1;
+							newface.pile = fc.pile;
+							newface.face = fc.face;
 							FaceSubFaces.push_back(newface);
 
 							//update face//
@@ -1129,6 +1277,366 @@ void FixNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& trian
 	}
 
 
+
+}
+
+//should be better than FixNonManifoldEdges()
+void FixNonManifolds(vector<PointCoordsExt>& points, vector<Triangle>& triangles, std::map<int, VxDiagonalGroups>& groups)
+{
+	vector<vector<int>>vxToTrigs(points.size());
+	for (int t = 0; t < triangles.size(); t++)
+	{
+		vxToTrigs[triangles[t].v0].push_back(t);
+		vxToTrigs[triangles[t].v1].push_back(t);
+		vxToTrigs[triangles[t].v2].push_back(t);
+	}
+
+	vector<TrigEdge>edges; edges.reserve(3 * triangles.size());
+	for (int t = 0; t < triangles.size(); t++)
+	{
+		TrigEdge te;
+
+		te.v2 = triangles[t].v2;
+		if (triangles[t].v0 < triangles[t].v1)
+		{
+			te.v0 = triangles[t].v0;
+			te.v1 = triangles[t].v1;
+		}
+		else
+		{
+			te.v0 = triangles[t].v1;
+			te.v1 = triangles[t].v0;
+		}
+		edges.push_back(te);
+
+		te.v2 = triangles[t].v0;
+		if (triangles[t].v1 < triangles[t].v2)
+		{
+			te.v0 = triangles[t].v1;
+			te.v1 = triangles[t].v2;
+		}
+		else
+		{
+			te.v0 = triangles[t].v2;
+			te.v1 = triangles[t].v1;
+		}
+		edges.push_back(te);
+
+		te.v2 = triangles[t].v1;
+		if (triangles[t].v0 < triangles[t].v2)
+		{
+			te.v0 = triangles[t].v0;
+			te.v1 = triangles[t].v2;
+		}
+		else
+		{
+			te.v0 = triangles[t].v2;
+			te.v1 = triangles[t].v0;
+		}
+		edges.push_back(te);
+	}
+
+	std::sort(edges.begin(), edges.end());
+
+
+	int NonManifoldEdgesNum = 0;
+	int EdgeRep = 0;
+	int oldv0 = -1, oldv1 = -1;
+	int EdgeOnMoreThanFour = 0;
+	int EdgeOnOdd = 0;
+	for (int i = 0; i < edges.size(); i++)
+	{
+		if (i % 100 == 0)
+			cout << "edge " << i << " out of " << edges.size() << "\n";
+
+		if (edges[i].v0 != oldv0 || edges[i].v1 != oldv1)
+		{
+			if (EdgeRep > 2)
+			{
+				int v0 = oldv0;
+				int v1 = oldv1;
+
+				set<int>group1Vxs;
+				set<int>group2Vxs;
+				set<int>neutralVxs;
+
+				set<int>TrigsToChangev0;
+				set<int>TrigsToChangev1;
+
+				int newv0 = 1, newv1 = -1;
+
+				//start with one vertex
+				//create a new vertex
+				//go through its trigs, and make the two vxs sets
+				//keep trigs that belong to group 1, or not belonging to either of them
+				//change vertex in trigs that belong to group1 
+				//for trigs that don't belong to either group, check the vertices, and decide to which group it belongs, and add neutral vertices !
+				//create faces for neutral vertices
+
+				/////////////////////
+				// starting with v0//
+				/////////////////////
+
+				
+				VxDiagonalGroups g = groups[v0];
+				bool validGroup = (g.pile1 != 0 || g.pile2 != 0 || g.face1 != 0 || g.face2 != 0 || g.face3 != 0 || g.face4 != 0);
+
+				if (validGroup)
+				{
+					//create new vertex
+					newv0 = points.size();
+					points.push_back(points[v0]);
+					points[points.size() - 1].x -= 0.3;
+
+
+					for (int vt = 0; vt < vxToTrigs[v0].size(); vt++)
+					{
+						int tindex = vxToTrigs[v0][vt];
+
+						//get 3 vertices
+						set<int>vxs;
+						vxs.insert(triangles[tindex].v0);
+						vxs.insert(triangles[tindex].v1);
+						vxs.insert(triangles[tindex].v2);
+
+						bool belongsToGroup1 = (triangles[tindex].pile == g.pile1 && triangles[tindex].face == g.face1) || (triangles[tindex].pile == g.pile2 && triangles[tindex].face == g.face3);
+						bool belongsToGroup2 = (triangles[tindex].pile == g.pile1 && triangles[tindex].face == g.face2) || (triangles[tindex].pile == g.pile2 && triangles[tindex].face == g.face4);
+
+						if (belongsToGroup1)
+						{
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+
+								group1Vxs.insert(vx);
+							}
+						}
+						else if (belongsToGroup2)
+						{
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+
+								group2Vxs.insert(vx);
+							}
+
+							TrigsToChangev0.insert(tindex);
+							
+						}
+					}
+
+					//find commons, remove them, and add to neutral
+					for (int vt = 0; vt < vxToTrigs[v0].size(); vt++)
+					{
+						int tindex = vxToTrigs[v0][vt];
+
+						//get 3 vertices
+						set<int>vxs;
+						vxs.insert(triangles[tindex].v0);
+						vxs.insert(triangles[tindex].v1);
+						vxs.insert(triangles[tindex].v2);
+
+						bool belongsToGroup1 = (triangles[tindex].pile == g.pile1 && triangles[tindex].face == g.face1) || (triangles[tindex].pile == g.pile2 && triangles[tindex].face == g.face3);
+						bool belongsToGroup2 = (triangles[tindex].pile == g.pile1 && triangles[tindex].face == g.face2) || (triangles[tindex].pile == g.pile2 && triangles[tindex].face == g.face4);
+
+						if (!belongsToGroup1 && !belongsToGroup2) //means pile and face are -1
+						{
+							bool g1 = false, g2 = false;
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+
+								if (group1Vxs.find(vx) != group1Vxs.end())
+								{
+									g1 = true;
+									continue;
+								}
+								if (group2Vxs.find(vx) != group2Vxs.end())
+								{
+									g2 = true;
+									continue;
+								}
+
+								neutralVxs.insert(vx);
+							}
+							if (g2 && !g1)
+								TrigsToChangev0.insert(tindex);
+							//should catch if both g1 and g2
+
+						}
+						else //means belongsToGroup1 || belongsToGroup2)
+						{
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+
+								if (group1Vxs.find(vx) != group1Vxs.end() && group2Vxs.find(vx) != group2Vxs.end())
+									neutralVxs.insert(vx);
+							}
+						}
+					}
+
+					//create new trigs
+					for (int vx : neutralVxs)
+					{
+						Triangle t;
+						t.v0 = v0;
+						t.v1 = newv0;
+						t.v2 = vx;
+						triangles.push_back(t);
+					}
+				}
+
+				//////////////////
+				// now  with v1//
+				/////////////////
+				
+				g = groups[v1];
+				validGroup = (g.pile1 != 0 || g.pile2 != 0 || g.face1 != 0 || g.face2 != 0 || g.face3 != 0 || g.face4 != 0);
+
+				if (validGroup)
+				{
+					//create new vertex
+					newv1 = points.size();
+					points.push_back(points[v1]);
+					points[points.size() - 1].x -= 0.3;
+
+					group1Vxs.clear();
+					group2Vxs.clear();
+					neutralVxs.clear();
+
+					for (int vt = 0; vt < vxToTrigs[v0].size(); vt++)
+					{
+						int tindex = vxToTrigs[v0][vt];
+
+						//get 3 vertices
+						set<int>vxs;
+						vxs.insert(triangles[tindex].v0);
+						vxs.insert(triangles[tindex].v1);
+						vxs.insert(triangles[tindex].v2);
+
+						bool belongsToGroup1 = (triangles[tindex].pile == g.pile1 && triangles[tindex].face == g.face1) || (triangles[tindex].pile == g.pile2 && triangles[tindex].face == g.face3);
+						bool belongsToGroup2 = (triangles[tindex].pile == g.pile1 && triangles[tindex].face == g.face2) || (triangles[tindex].pile == g.pile2 && triangles[tindex].face == g.face4);
+
+						if (belongsToGroup1)
+						{
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+
+								group1Vxs.insert(vx);
+							}
+						}
+						else if (belongsToGroup2)
+						{
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+
+								group2Vxs.insert(vx);
+							}
+
+							TrigsToChangev1.insert(tindex);
+						}
+					}
+
+					//find commons, remove them, and add to neutral
+					for (int vt = 0; vt < vxToTrigs[v1].size(); vt++)
+					{
+						int tindex = vxToTrigs[v1][vt];
+
+						//get 3 vertices
+						set<int>vxs;
+						vxs.insert(triangles[tindex].v0);
+						vxs.insert(triangles[tindex].v1);
+						vxs.insert(triangles[tindex].v2);
+
+						bool belongsToGroup1 = (triangles[tindex].pile == g.pile1 && triangles[tindex].face == g.face1) || (triangles[tindex].pile == g.pile2 && triangles[tindex].face == g.face3);
+						bool belongsToGroup2 = (triangles[tindex].pile == g.pile1 && triangles[tindex].face == g.face2) || (triangles[tindex].pile == g.pile2 && triangles[tindex].face == g.face4);
+
+						if (!belongsToGroup1 && !belongsToGroup2) //means pile and face are -1
+						{
+							bool g1 = false, g2 = false;
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+
+								if (group1Vxs.find(vx) != group1Vxs.end())
+								{
+									g1 = true;
+									continue;
+								}
+								if (group2Vxs.find(vx) != group2Vxs.end())
+								{
+									g2 = true;
+									continue;
+								}
+
+								neutralVxs.insert(vx);
+							}
+							if (g2 && !g1)
+								TrigsToChangev1.insert(tindex);
+
+						}
+						else //means belongsToGroup1 || belongsToGroup2)
+						{
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+
+								if (group1Vxs.find(vx) != group1Vxs.end() && group2Vxs.find(vx) != group2Vxs.end())
+									neutralVxs.insert(vx);
+							}
+						}
+					}
+
+					//create new trigs
+					for (int vx : neutralVxs)
+					{
+						Triangle t;
+						t.v0 = v1;
+						t.v1 = newv1;
+						t.v2 = vx;
+						triangles.push_back(t);
+					}
+				}
+
+				for (int tindex : TrigsToChangev0)
+				{
+					if (triangles[tindex].v0 == v0)
+						triangles[tindex].v0 = newv0;
+					if (triangles[tindex].v1 == v0)
+						triangles[tindex].v1 = newv0;
+					if (triangles[tindex].v2 == v0)
+						triangles[tindex].v2 = newv0;
+				}
+				for (int tindex : TrigsToChangev1)
+				{
+					if (triangles[tindex].v0 == v1)
+						triangles[tindex].v0 = newv1;
+					if (triangles[tindex].v1 == v1)
+						triangles[tindex].v1 = newv1;
+					if (triangles[tindex].v2 == v1)
+						triangles[tindex].v2 = newv1;
+				}
+
+			}
+			oldv0 = edges[i].v0;
+			oldv1 = edges[i].v1;
+
+			EdgeRep = 1;
+		}
+		else
+			EdgeRep++;
+	}
 
 }
 
