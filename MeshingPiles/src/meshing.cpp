@@ -473,8 +473,8 @@ void detectNonManifoldVertices(vector<PointCoordsExt>& points, vector<PileStruct
 
 					int nbpileIndex = pixels[nbpixelIndex].PilesOffset + nbpilePixelIndex;
 
-					if (nbpileIndex < pileIndex)
-						continue;
+					//if (nbpileIndex < pileIndex)
+					//	continue;
 
 					g.pile2 = nbpileIndex;
 
