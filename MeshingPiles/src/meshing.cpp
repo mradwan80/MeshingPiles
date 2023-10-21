@@ -1509,9 +1509,9 @@ void FixNonManifolds(vector<PointCoordsExt>& points, vector<Triangle>& triangles
 					group2Vxs.clear();
 					neutralVxs.clear();
 
-					for (int vt = 0; vt < vxToTrigs[v0].size(); vt++)
+					for (int vt = 0; vt < vxToTrigs[v1].size(); vt++)
 					{
-						int tindex = vxToTrigs[v0][vt];
+						int tindex = vxToTrigs[v1][vt];
 
 						//get 3 vertices
 						set<int>vxs;
@@ -1659,7 +1659,7 @@ void CheckConnectedComponents(int pnum, vector<Triangle>& triangles)
 	int cc = 0;
 	for (int p = 0; p < pnum; p++)
 	{
-		if (!taken[p])
+		if (!taken[p] && nbs[p].size() != 0)
 		{
 			taken[p] = true;
 			stack<int>st;
