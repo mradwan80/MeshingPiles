@@ -51,23 +51,23 @@ void visualizeOriginalPiles(std::string file_stem, int GlobalW, int GlobalH, dou
 
 		for (PileStruct pile : cellsPiles[cell])
 		{
-			oplyfile << "3 " << offset + 0 << " " << offset + 3 << " " << offset + 1 << "\n";
-			oplyfile << "3 " << offset + 0 << " " << offset + 2 << " " << offset + 3 << "\n";
+			oplyfile << "3 " << offset + 0 << " " << offset + 2 << " " << offset + 1 << "\n";
+			oplyfile << "3 " << offset + 0 << " " << offset + 3 << " " << offset + 2 << "\n";
 
-			oplyfile << "3 " << offset + 4 << " " << offset + 5 << " " << offset + 7 << "\n";
-			oplyfile << "3 " << offset + 4 << " " << offset + 7 << " " << offset + 6 << "\n";
+			oplyfile << "3 " << offset + 4 << " " << offset + 5 << " " << offset + 6 << "\n";
+			oplyfile << "3 " << offset + 4 << " " << offset + 6 << " " << offset + 7 << "\n";
 
 			oplyfile << "3 " << offset + 0 << " " << offset + 1 << " " << offset + 5 << "\n";
 			oplyfile << "3 " << offset + 0 << " " << offset + 5 << " " << offset + 4 << "\n";
 
-			oplyfile << "3 " << offset + 2 << " " << offset + 7 << " " << offset + 3 << "\n";
-			oplyfile << "3 " << offset + 2 << " " << offset + 6 << " " << offset + 7 << "\n";
+			oplyfile << "3 " << offset + 3 << " " << offset + 6 << " " << offset + 2 << "\n";
+			oplyfile << "3 " << offset + 3 << " " << offset + 7 << " " << offset + 6 << "\n";
 
-			oplyfile << "3 " << offset + 0 << " " << offset + 6 << " " << offset + 2 << "\n";
-			oplyfile << "3 " << offset + 0 << " " << offset + 4 << " " << offset + 6 << "\n";
+			oplyfile << "3 " << offset + 0 << " " << offset + 7 << " " << offset + 3 << "\n";
+			oplyfile << "3 " << offset + 0 << " " << offset + 4 << " " << offset + 7 << "\n";
 
-			oplyfile << "3 " << offset + 1 << " " << offset + 3 << " " << offset + 7 << "\n";
-			oplyfile << "3 " << offset + 1 << " " << offset + 7 << " " << offset + 5 << "\n";
+			oplyfile << "3 " << offset + 1 << " " << offset + 2 << " " << offset + 6 << "\n";
+			oplyfile << "3 " << offset + 1 << " " << offset + 6 << " " << offset + 5 << "\n";
 
 			offset += 8;
 		}
