@@ -15,12 +15,6 @@
 #include "DDSstuff.h" //should be replaced by DDS.h later
 using namespace std;
 
-struct VxDiagonalGroups
-{
-	int pile1, face1, face2;
-	int pile2, face3, face4;
-};//group1: (pile1,face1), (pile2, face3). group2: (pile1,face2),(pile2,face4)
-
 struct Pixel
 {
 	int x, y;
@@ -112,8 +106,6 @@ struct TrigEdge
 //specific for ortho projection//
 void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, float left, float right, float bottom, float top, vector<PointCoordsExt>& points, vector<Triangle>& triangles);
 
-void detectNonManifoldVertices(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vector<Pixel>& pixels, vector<int>& firstOccurance, const int w, const int h, std::map<int, VxDiagonalGroups>& groups);
-
 //idea: moave to another vector, along with their indices. define how to compare (x,y,z) then index. sort. search for duplicates, all refer to first.
 void findDuplicates(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, vector<int>& firstOccurance);
 
@@ -142,7 +134,7 @@ void FindNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& tria
 
 void FixNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& triangles);
 
-void FixNonManifolds(vector<PointCoordsExt>& points, vector<Triangle>& triangles, std::map<int, VxDiagonalGroups>& groups);
+void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triangles);
 
 void CheckConnectedComponents(int pnum, vector<Triangle>& triangles);
 
