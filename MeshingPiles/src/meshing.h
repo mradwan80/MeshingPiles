@@ -132,6 +132,8 @@ bool TrigHasTwoVxs(Triangle trig, int v0, int v1, int& third);
 
 void FindNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& triangles);
 
+void FindEdgesOnOneTriangle(vector<PointCoordsExt>& points, vector<Triangle>& triangles);
+
 void FixNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& triangles);
 
 void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triangles);

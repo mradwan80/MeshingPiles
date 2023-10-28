@@ -368,11 +368,13 @@ void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, co
 	cout << "triangulating faces ended\n";
 
 	FindNonManifoldEdges(points, triangles);
+	FindEdgesOnOneTriangle(points, triangles);
 
 
 	FixNonManifoldsNew(points, triangles);
 
 	FindNonManifoldEdges(points, triangles);
+	FindEdgesOnOneTriangle(points, triangles);
 
 	CheckConnectedComponents(points.size(), triangles);
 
@@ -959,6 +961,101 @@ void FindNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& tria
 	int u = 3;
 
 }
+
+void FindEdgesOnOneTriangle(vector<PointCoordsExt>& points, vector<Triangle>& triangles)
+{
+	vector<bool>VxIsMf(points.size(), true);
+
+	vector<vector<int>>vxToTrigs(points.size());
+	for (int t = 0; t < triangles.size(); t++)
+	{
+		vxToTrigs[triangles[t].v0].push_back(t);
+		vxToTrigs[triangles[t].v1].push_back(t);
+		vxToTrigs[triangles[t].v2].push_back(t);
+	}
+
+
+	vector<TrigEdge>edges; edges.reserve(3 * triangles.size());
+	for (int t = 0; t < triangles.size(); t++)
+	{
+		TrigEdge te;
+
+		te.v2 = triangles[t].v2;
+		if (triangles[t].v0 < triangles[t].v1)
+		{
+			te.v0 = triangles[t].v0;
+			te.v1 = triangles[t].v1;
+		}
+		else
+		{
+			te.v0 = triangles[t].v1;
+			te.v1 = triangles[t].v0;
+		}
+		edges.push_back(te);
+
+		te.v2 = triangles[t].v0;
+		if (triangles[t].v1 < triangles[t].v2)
+		{
+			te.v0 = triangles[t].v1;
+			te.v1 = triangles[t].v2;
+		}
+		else
+		{
+			te.v0 = triangles[t].v2;
+			te.v1 = triangles[t].v1;
+		}
+		edges.push_back(te);
+
+		te.v2 = triangles[t].v1;
+		if (triangles[t].v0 < triangles[t].v2)
+		{
+			te.v0 = triangles[t].v0;
+			te.v1 = triangles[t].v2;
+		}
+		else
+		{
+			te.v0 = triangles[t].v2;
+			te.v1 = triangles[t].v0;
+		}
+		edges.push_back(te);
+	}
+
+	std::sort(edges.begin(), edges.end());
+
+	int edgesOnOneTrig = 0;
+
+	int NonManifoldEdgesNum = 0;
+	int EdgeRep = 0;
+	int oldv0 = -1, oldv1 = -1;
+	int EdgeOnMoreThanFour = 0;
+	int EdgeOnOdd = 0;
+	for (int i = 0; i < edges.size(); i++)
+	{
+		//if (i % 100 == 0)
+		//	cout << "edge " << i << " out of " << edges.size() << "\n";
+
+		if (edges[i].v0 != oldv0 || edges[i].v1 != oldv1)
+		{
+			if (EdgeRep == 1)
+				edgesOnOneTrig++;
+			
+			oldv0 = edges[i].v0;
+			oldv1 = edges[i].v1;
+
+			EdgeRep = 1;
+		}
+		else
+		{
+			EdgeRep++;
+		}
+	}
+
+	cout << "the edges on one triangle only " << edgesOnOneTrig << " vxs\n";
+
+	int u = 3;
+
+}
+
 
 void FixNonManifoldEdges(vector<PointCoordsExt>& points, vector<Triangle>& triangles)
 {
