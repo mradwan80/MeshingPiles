@@ -1240,6 +1240,7 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 				int v1 = oldv1;
 
 				set<int>neutralVxs;
+				set<int>neutralRemoves;
 
 				set<int>TrigsToChangev0;
 				set<int>TrigsToChangev1;
@@ -1376,15 +1377,26 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 								continue;
 							bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
 							bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
-							if (InTaken && InNotTaken)
-								neutralVxs.insert(vx);
-							else if (!InTaken && !InNotTaken)
-								neutralVxs.insert(vx);
-							else if (InTaken && !InNotTaken)
+							if (InTaken && !InNotTaken)
 								convert = true;
 						}
-						if(convert)
+						if (convert)
+						{
 							TrigsToChangev0.insert(tindex);
+
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+								bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
+								bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
+								if (InTaken && InNotTaken)
+									neutralVxs.insert(vx);
+								else if (!InTaken && !InNotTaken)
+									neutralVxs.insert(vx);
+							}
+
+						}
 					}
 					else
 					{
@@ -1408,6 +1420,22 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 					}
 				}
 
+				for (int vx : neutralVxs)
+				{
+					int count = 0;
+					for (int tindex : TrigsToChangev0)
+					{
+						if (triangles[tindex].v0 == vx || triangles[tindex].v1 == vx || triangles[tindex].v2 == vx)
+							count++;
+					}
+					if (count > 1)
+						neutralRemoves.insert(vx);
+				}
+				for (int vx : neutralRemoves)
+				{
+					neutralVxs.erase(vx);
+				}
+
 				//create new trigs
 				for (int vx : neutralVxs)
 				{
@@ -1424,6 +1452,7 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 				///////////
 
 				neutralVxs.clear();
+				neutralRemoves.clear();
 				group0.clear();
 				group1.clear();
 				group2.clear();
@@ -1552,16 +1581,26 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 								continue;
 							bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
 							bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
-							if (InTaken && InNotTaken)
-								neutralVxs.insert(vx);
-							else if (!InTaken && !InNotTaken)
-								neutralVxs.insert(vx);
-							else if (InTaken && !InNotTaken)
+							if (InTaken && !InNotTaken)
 								convert = true;
-								
 						}
-						if(convert)
+						if (convert)
+						{
 							TrigsToChangev1.insert(tindex);
+
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+								bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
+								bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
+								if (InTaken && InNotTaken)
+									neutralVxs.insert(vx);
+								else if (!InTaken && !InNotTaken)
+									neutralVxs.insert(vx);
+							}
+
+						}
 					}
 					else
 					{
@@ -1583,6 +1622,22 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 								neutralVxs.insert(vx);
 						}
 					}
+				}
+
+				for (int vx : neutralVxs)
+				{
+					int count = 0;
+					for (int tindex : TrigsToChangev1)
+					{
+						if (triangles[tindex].v0 == vx || triangles[tindex].v1 == vx || triangles[tindex].v2 == vx)
+							count++;
+					}
+					if (count > 1)
+						neutralRemoves.insert(vx);
+				}
+				for (int vx : neutralRemoves)
+				{
+					neutralVxs.erase(vx);
 				}
 
 				//create new trigs
