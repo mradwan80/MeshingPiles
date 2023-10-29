@@ -1336,150 +1336,175 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 				int v0 = oldv0;
 				int v1 = oldv1;
 
-				set<int>neutralVxs;
-				set<int>neutralRemoves;
+				vector<int>probemsVxs;
+				probemsVxs.push_back(v0);	probemsVxs.push_back(v1);
 
-				set<int>TrigsToChangev0;
-				set<int>TrigsToChangev1;
+				vector<set<int>>TrigsToChange(2);
+				vector<int>newv(2);
 
-				set<int> TakeVxs;
-				set<int> DontTakeVxs;
-
-				int newv0 = 1, newv1 = -1;
-
-				int pile0, pile1;
-
-				set<int>group0; set<int>group1; set<int>group2; set<int>group3;
-				
 				/////////////////////
 				// starting with v0//
 				/////////////////////
-				
-				//create new vertex
-				newv0 = points.size();
-				points.push_back(points[v0]);
 
-				pile0 = -1; pile1 = -1;
-				for (int vt = 0; vt < vxToTrigs[v0].size(); vt++)
+				for (int v = 0; v < 2; v++)
 				{
-					int tindex = vxToTrigs[v0][vt];
-					if (triangles[tindex].pile == -1)
-						continue;
+					int vertex = probemsVxs[v];
 
-					if (pile0 == -1)
-						pile0 = triangles[tindex].pile;
-					else if (pile1 == -1 && pile0 != triangles[tindex].pile)
-						pile1 = triangles[tindex].pile;
-					else if (pile0 != -1 && pile1 != -1 && pile0 != triangles[tindex].pile && pile1 != triangles[tindex].pile)
-						pile0 = pile0;
-				}
+					set<int>neutralVxs;
+					set<int>neutralRemoves;
 
-				for (int vt = 0; vt < vxToTrigs[v0].size(); vt++)
-				{
-					int tindex = vxToTrigs[v0][vt];
-					if (triangles[tindex].pile != -1)
+					set<int> TakeVxs;
+					set<int> DontTakeVxs;
+
+					set<int>group0; set<int>group1; set<int>group2; set<int>group3;
+
+					//create new vertex
+					newv[v] = points.size();
+					points.push_back(points[vertex]);
+
+					int pile0 = -1, pile1 = -1;
+					for (int vt = 0; vt < vxToTrigs[vertex].size(); vt++)
 					{
-							
-						if (triangles[tindex].pile == pile0 && (triangles[tindex].face == 0 || triangles[tindex].face == 2))
-							group0.insert(tindex);
-						else if (triangles[tindex].pile == pile0 && (triangles[tindex].face == 1 || triangles[tindex].face == 3))
-							group1.insert(tindex);
-						else if (triangles[tindex].pile == pile1 && (triangles[tindex].face == 0 || triangles[tindex].face == 2))
-							group2.insert(tindex);
-						else if (triangles[tindex].pile == pile1 && (triangles[tindex].face == 1 || triangles[tindex].face == 3))
-							group3.insert(tindex);
-							
-					}
-				}
-
-
-				for (int t : group0)
-				{
-					TrigsToChangev0.insert(t);
-
-					set<int>vxs;
-					vxs.insert(triangles[t].v0);
-					vxs.insert(triangles[t].v1);
-					vxs.insert(triangles[t].v2);
-
-					for (int vx : vxs)
-					{
-						if (vx == v0 || vx == v1)
+						int tindex = vxToTrigs[vertex][vt];
+						if (triangles[tindex].pile == -1)
 							continue;
-						TakeVxs.insert(vx);
-					}
-				}
-				for (int t : group3)
-				{
-					TrigsToChangev0.insert(t);
-					
-					set<int>vxs;
-					vxs.insert(triangles[t].v0);
-					vxs.insert(triangles[t].v1);
-					vxs.insert(triangles[t].v2);
 
-					for (int vx : vxs)
-					{
-						if (vx == v0 || vx == v1)
-							continue;
-						TakeVxs.insert(vx);
+						if (pile0 == -1)
+							pile0 = triangles[tindex].pile;
+						else if (pile1 == -1 && pile0 != triangles[tindex].pile)
+							pile1 = triangles[tindex].pile;
+						else if (pile0 != -1 && pile1 != -1 && pile0 != triangles[tindex].pile && pile1 != triangles[tindex].pile)
+							pile0 = pile0;
 					}
-				}
 
-				for (int t : group1)
-				{
-					set<int>vxs;
-					vxs.insert(triangles[t].v0);
-					vxs.insert(triangles[t].v1);
-					vxs.insert(triangles[t].v2);
-
-					for (int vx : vxs)
+					for (int vt = 0; vt < vxToTrigs[vertex].size(); vt++)
 					{
-						if (vx == v0 || vx == v1)
-							continue;
-						DontTakeVxs.insert(vx);
+						int tindex = vxToTrigs[vertex][vt];
+						if (triangles[tindex].pile != -1)
+						{
+
+							if (triangles[tindex].pile == pile0 && (triangles[tindex].face == 0 || triangles[tindex].face == 2))
+								group0.insert(tindex);
+							else if (triangles[tindex].pile == pile0 && (triangles[tindex].face == 1 || triangles[tindex].face == 3))
+								group1.insert(tindex);
+							else if (triangles[tindex].pile == pile1 && (triangles[tindex].face == 0 || triangles[tindex].face == 2))
+								group2.insert(tindex);
+							else if (triangles[tindex].pile == pile1 && (triangles[tindex].face == 1 || triangles[tindex].face == 3))
+								group3.insert(tindex);
+
+						}
 					}
-				}
-				for (int t : group2)
-				{
-					set<int>vxs;
-					vxs.insert(triangles[t].v0);
-					vxs.insert(triangles[t].v1);
-					vxs.insert(triangles[t].v2);
 
-					for (int vx : vxs)
+
+					for (int t : group0)
 					{
-						if (vx == v0 || vx == v1)
-							continue;
-						DontTakeVxs.insert(vx);
-					}
-				}
-					
-				for (int vt = 0; vt < vxToTrigs[v0].size(); vt++)
-				{
-					bool convert = false;
-					int tindex = vxToTrigs[v0][vt];
-					if (triangles[tindex].pile == -1)
-					{
-						//get 3 vertices
+						TrigsToChange[v].insert(t);
+
 						set<int>vxs;
-						vxs.insert(triangles[tindex].v0);
-						vxs.insert(triangles[tindex].v1);
-						vxs.insert(triangles[tindex].v2);
+						vxs.insert(triangles[t].v0);
+						vxs.insert(triangles[t].v1);
+						vxs.insert(triangles[t].v2);
 
-						bool convert = false;
 						for (int vx : vxs)
 						{
 							if (vx == v0 || vx == v1)
 								continue;
-							bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
-							bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
-							if (InTaken && !InNotTaken)
-								convert = true;
+							TakeVxs.insert(vx);
 						}
-						if (convert)
+					}
+					for (int t : group3)
+					{
+						TrigsToChange[v].insert(t);
+
+						set<int>vxs;
+						vxs.insert(triangles[t].v0);
+						vxs.insert(triangles[t].v1);
+						vxs.insert(triangles[t].v2);
+
+						for (int vx : vxs)
 						{
-							TrigsToChangev0.insert(tindex);
+							if (vx == v0 || vx == v1)
+								continue;
+							TakeVxs.insert(vx);
+						}
+					}
+
+					for (int t : group1)
+					{
+						set<int>vxs;
+						vxs.insert(triangles[t].v0);
+						vxs.insert(triangles[t].v1);
+						vxs.insert(triangles[t].v2);
+
+						for (int vx : vxs)
+						{
+							if (vx == v0 || vx == v1)
+								continue;
+							DontTakeVxs.insert(vx);
+						}
+					}
+					for (int t : group2)
+					{
+						set<int>vxs;
+						vxs.insert(triangles[t].v0);
+						vxs.insert(triangles[t].v1);
+						vxs.insert(triangles[t].v2);
+
+						for (int vx : vxs)
+						{
+							if (vx == v0 || vx == v1)
+								continue;
+							DontTakeVxs.insert(vx);
+						}
+					}
+
+					for (int vt = 0; vt < vxToTrigs[vertex].size(); vt++)
+					{
+						bool convert = false;
+						int tindex = vxToTrigs[vertex][vt];
+						if (triangles[tindex].pile == -1)
+						{
+							//get 3 vertices
+							set<int>vxs;
+							vxs.insert(triangles[tindex].v0);
+							vxs.insert(triangles[tindex].v1);
+							vxs.insert(triangles[tindex].v2);
+
+							bool convert = false;
+							for (int vx : vxs)
+							{
+								if (vx == v0 || vx == v1)
+									continue;
+								bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
+								bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
+								if (InTaken && !InNotTaken)
+									convert = true;
+							}
+							if (convert)
+							{
+								TrigsToChange[v].insert(tindex);
+
+								for (int vx : vxs)
+								{
+									if (vx == v0 || vx == v1)
+										continue;
+									bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
+									bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
+									if (InTaken && InNotTaken)
+										neutralVxs.insert(vx);
+									else if (!InTaken && !InNotTaken)
+										neutralVxs.insert(vx);
+								}
+
+							}
+						}
+						else
+						{
+							//get 3 vertices
+							set<int>vxs;
+							vxs.insert(triangles[tindex].v0);
+							vxs.insert(triangles[tindex].v1);
+							vxs.insert(triangles[tindex].v2);
 
 							for (int vx : vxs)
 							{
@@ -1492,283 +1517,58 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 								else if (!InTaken && !InNotTaken)
 									neutralVxs.insert(vx);
 							}
-
 						}
 					}
-					else
-					{
-						//get 3 vertices
-						set<int>vxs;
-						vxs.insert(triangles[tindex].v0);
-						vxs.insert(triangles[tindex].v1);
-						vxs.insert(triangles[tindex].v2);
 
-						for (int vx : vxs)
+					for (int vx : neutralVxs)
+					{
+						int count = 0;
+						for (int tindex : TrigsToChange[v])
 						{
-							if (vx == v0 || vx == v1)
-								continue;
-							bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
-							bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
-							if (InTaken && InNotTaken)
-								neutralVxs.insert(vx);
-							else if (!InTaken && !InNotTaken)
-								neutralVxs.insert(vx);
+							if (triangles[tindex].v0 == vx || triangles[tindex].v1 == vx || triangles[tindex].v2 == vx)
+								count++;
 						}
+						if (count > 1)
+							neutralRemoves.insert(vx);
 					}
-				}
-
-				for (int vx : neutralVxs)
-				{
-					int count = 0;
-					for (int tindex : TrigsToChangev0)
+					for (int vx : neutralRemoves)
 					{
-						if (triangles[tindex].v0 == vx || triangles[tindex].v1 == vx || triangles[tindex].v2 == vx)
-							count++;
+						neutralVxs.erase(vx);
 					}
-					if (count > 1)
-						neutralRemoves.insert(vx);
-				}
-				for (int vx : neutralRemoves)
-				{
-					neutralVxs.erase(vx);
-				}
 
-				//create new trigs
-				for (int vx : neutralVxs)
-				{
-					Triangle t;
-					t.v0 = v0;
-					t.v1 = newv0;
-					t.v2 = vx;
-					triangles.push_back(t);
+					//create new trigs
+					for (int vx : neutralVxs)
+					{
+						Triangle t;
+						t.v0 = vertex;
+						t.v1 = newv[v];
+						t.v2 = vx;
+						triangles.push_back(t);
+					}
 				}
-
 			
-				///////////
-				// now v1//
-				///////////
-
-				neutralVxs.clear();
-				neutralRemoves.clear();
-				group0.clear();
-				group1.clear();
-				group2.clear();
-				group3.clear();
-
-				TakeVxs.clear();
-				DontTakeVxs.clear();
-
-				//create new vertex
-				newv1 = points.size();
-				points.push_back(points[v1]);
-
-				pile0 = -1; pile1 = -1;
-				for (int vt = 0; vt < vxToTrigs[v1].size(); vt++)
-				{
-					int tindex = vxToTrigs[v1][vt];
-					if (triangles[tindex].pile == -1)
-						continue;
-
-					if (pile0 == -1)
-						pile0 = triangles[tindex].pile;
-					else if (pile1 == -1 && pile0 != triangles[tindex].pile)
-						pile1 = triangles[tindex].pile;
-					else if (pile0 != -1 && pile1 != -1 && pile0 != triangles[tindex].pile && pile1 != triangles[tindex].pile)
-						pile0 = pile0;
-				}
-
-				for (int vt = 0; vt < vxToTrigs[v1].size(); vt++)
-				{
-					int tindex = vxToTrigs[v1][vt];
-					if (triangles[tindex].pile != -1)
-					{
-
-						if (triangles[tindex].pile == pile0 && (triangles[tindex].face == 0 || triangles[tindex].face == 2))
-							group0.insert(tindex);
-						else if (triangles[tindex].pile == pile0 && (triangles[tindex].face == 1 || triangles[tindex].face == 3))
-							group1.insert(tindex);
-						else if (triangles[tindex].pile == pile1 && (triangles[tindex].face == 0 || triangles[tindex].face == 2))
-							group2.insert(tindex);
-						else if (triangles[tindex].pile == pile1 && (triangles[tindex].face == 1 || triangles[tindex].face == 3))
-							group3.insert(tindex);
-
-					}
-				}
-
-
-				for (int t : group0)
-				{
-					TrigsToChangev1.insert(t);
-
-					set<int>vxs;
-					vxs.insert(triangles[t].v0);
-					vxs.insert(triangles[t].v1);
-					vxs.insert(triangles[t].v2);
-
-					for (int vx : vxs)
-					{
-						if (vx == v0 || vx == v1)
-							continue;
-						TakeVxs.insert(vx);
-					}
-				}
-				for (int t : group3)
-				{
-					TrigsToChangev1.insert(t);
-
-					set<int>vxs;
-					vxs.insert(triangles[t].v0);
-					vxs.insert(triangles[t].v1);
-					vxs.insert(triangles[t].v2);
-
-					for (int vx : vxs)
-					{
-						if (vx == v0 || vx == v1)
-							continue;
-						TakeVxs.insert(vx);
-					}
-				}
-
-				for (int t : group1)
-				{
-					set<int>vxs;
-					vxs.insert(triangles[t].v0);
-					vxs.insert(triangles[t].v1);
-					vxs.insert(triangles[t].v2);
-
-					for (int vx : vxs)
-					{
-						if (vx == v0 || vx == v1)
-							continue;
-						DontTakeVxs.insert(vx);
-					}
-				}
-				for (int t : group2)
-				{
-					set<int>vxs;
-					vxs.insert(triangles[t].v0);
-					vxs.insert(triangles[t].v1);
-					vxs.insert(triangles[t].v2);
-
-					for (int vx : vxs)
-					{
-						if (vx == v0 || vx == v1)
-							continue;
-						DontTakeVxs.insert(vx);
-					}
-				}
-
-				for (int vt = 0; vt < vxToTrigs[v1].size(); vt++)
-				{
-					bool convert = false;
-					int tindex = vxToTrigs[v1][vt];
-					if (triangles[tindex].pile == -1)
-					{
-						//get 3 vertices
-						set<int>vxs;
-						vxs.insert(triangles[tindex].v0);
-						vxs.insert(triangles[tindex].v1);
-						vxs.insert(triangles[tindex].v2);
-
-						bool convert = false;
-
-						for (int vx : vxs)
-						{
-							if (vx == v0 || vx == v1)
-								continue;
-							bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
-							bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
-							if (InTaken && !InNotTaken)
-								convert = true;
-						}
-						if (convert)
-						{
-							TrigsToChangev1.insert(tindex);
-
-							for (int vx : vxs)
-							{
-								if (vx == v0 || vx == v1)
-									continue;
-								bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
-								bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
-								if (InTaken && InNotTaken)
-									neutralVxs.insert(vx);
-								else if (!InTaken && !InNotTaken)
-									neutralVxs.insert(vx);
-							}
-
-						}
-					}
-					else
-					{
-						//get 3 vertices
-						set<int>vxs;
-						vxs.insert(triangles[tindex].v0);
-						vxs.insert(triangles[tindex].v1);
-						vxs.insert(triangles[tindex].v2);
-
-						for (int vx : vxs)
-						{
-							if (vx == v0 || vx == v1)
-								continue;
-							bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
-							bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
-							if (InTaken && InNotTaken)
-								neutralVxs.insert(vx);
-							else if (!InTaken && !InNotTaken)
-								neutralVxs.insert(vx);
-						}
-					}
-				}
-
-				for (int vx : neutralVxs)
-				{
-					int count = 0;
-					for (int tindex : TrigsToChangev1)
-					{
-						if (triangles[tindex].v0 == vx || triangles[tindex].v1 == vx || triangles[tindex].v2 == vx)
-							count++;
-					}
-					if (count > 1)
-						neutralRemoves.insert(vx);
-				}
-				for (int vx : neutralRemoves)
-				{
-					neutralVxs.erase(vx);
-				}
-
-				//create new trigs
-				for (int vx : neutralVxs)
-				{
-					Triangle t;
-					t.v0 = v1;
-					t.v1 = newv1;
-					t.v2 = vx;
-					triangles.push_back(t);
-
-				}
-
+				
 				/////////////////////
 				// now updating vxs//
 				/////////////////////
 
-				for (int tindex : TrigsToChangev0)
+				for (int tindex : TrigsToChange[0])
 				{
 					if (triangles[tindex].v0 == v0)
-						triangles[tindex].v0 = newv0;
+						triangles[tindex].v0 = newv[0];
 					if (triangles[tindex].v1 == v0)
-						triangles[tindex].v1 = newv0;
+						triangles[tindex].v1 = newv[0];
 					if (triangles[tindex].v2 == v0)
-						triangles[tindex].v2 = newv0;
+						triangles[tindex].v2 = newv[0];
 				}
-				for (int tindex : TrigsToChangev1)
+				for (int tindex : TrigsToChange[1])
 				{
 					if (triangles[tindex].v0 == v1)
-						triangles[tindex].v0 = newv1;
+						triangles[tindex].v0 = newv[1];
 					if (triangles[tindex].v1 == v1)
-						triangles[tindex].v1 = newv1;
+						triangles[tindex].v1 = newv[1];
 					if (triangles[tindex].v2 == v1)
-						triangles[tindex].v2 = newv1;
+						triangles[tindex].v2 = newv[1];
 				}
 
 			}
