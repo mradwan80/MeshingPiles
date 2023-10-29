@@ -1350,8 +1350,10 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 				{
 					int vertex = probemsVxs[v];
 
+
+					set<int>OtherTrigs;
+
 					set<int>neutralVxs;
-					set<int>neutralRemoves;
 
 					set<int> TakeVxs;
 					set<int> DontTakeVxs;
@@ -1401,9 +1403,7 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 						TrigsToChange[v].insert(t);
 
 						set<int>vxs;
-						vxs.insert(triangles[t].v0);
-						vxs.insert(triangles[t].v1);
-						vxs.insert(triangles[t].v2);
+						vxs.insert(triangles[t].v0); vxs.insert(triangles[t].v1); vxs.insert(triangles[t].v2);
 
 						for (int vx : vxs)
 						{
@@ -1417,9 +1417,7 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 						TrigsToChange[v].insert(t);
 
 						set<int>vxs;
-						vxs.insert(triangles[t].v0);
-						vxs.insert(triangles[t].v1);
-						vxs.insert(triangles[t].v2);
+						vxs.insert(triangles[t].v0); vxs.insert(triangles[t].v1); vxs.insert(triangles[t].v2);
 
 						for (int vx : vxs)
 						{
@@ -1431,10 +1429,10 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 
 					for (int t : group1)
 					{
+						OtherTrigs.insert(t);
+
 						set<int>vxs;
-						vxs.insert(triangles[t].v0);
-						vxs.insert(triangles[t].v1);
-						vxs.insert(triangles[t].v2);
+						vxs.insert(triangles[t].v0); vxs.insert(triangles[t].v1); vxs.insert(triangles[t].v2);
 
 						for (int vx : vxs)
 						{
@@ -1445,10 +1443,10 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 					}
 					for (int t : group2)
 					{
+						OtherTrigs.insert(t);
+
 						set<int>vxs;
-						vxs.insert(triangles[t].v0);
-						vxs.insert(triangles[t].v1);
-						vxs.insert(triangles[t].v2);
+						vxs.insert(triangles[t].v0); vxs.insert(triangles[t].v1); vxs.insert(triangles[t].v2);
 
 						for (int vx : vxs)
 						{
@@ -1466,9 +1464,7 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 						{
 							//get 3 vertices
 							set<int>vxs;
-							vxs.insert(triangles[tindex].v0);
-							vxs.insert(triangles[tindex].v1);
-							vxs.insert(triangles[tindex].v2);
+							vxs.insert(triangles[tindex].v0); vxs.insert(triangles[tindex].v1); vxs.insert(triangles[tindex].v2);
 
 							bool convert = false;
 							for (int vx : vxs)
@@ -1481,59 +1477,53 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 									convert = true;
 							}
 							if (convert)
-							{
 								TrigsToChange[v].insert(tindex);
-
-								for (int vx : vxs)
-								{
-									if (vx == v0 || vx == v1)
-										continue;
-									bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
-									bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
-									if (InTaken && InNotTaken)
-										neutralVxs.insert(vx);
-									else if (!InTaken && !InNotTaken)
-										neutralVxs.insert(vx);
-								}
-
-							}
-						}
-						else
-						{
-							//get 3 vertices
-							set<int>vxs;
-							vxs.insert(triangles[tindex].v0);
-							vxs.insert(triangles[tindex].v1);
-							vxs.insert(triangles[tindex].v2);
-
-							for (int vx : vxs)
-							{
-								if (vx == v0 || vx == v1)
-									continue;
-								bool InTaken = TakeVxs.find(vx) != TakeVxs.end();
-								bool InNotTaken = DontTakeVxs.find(vx) != DontTakeVxs.end();
-								if (InTaken && InNotTaken)
-									neutralVxs.insert(vx);
-								else if (!InTaken && !InNotTaken)
-									neutralVxs.insert(vx);
-							}
+							else
+								OtherTrigs.insert(tindex);
 						}
 					}
 
-					for (int vx : neutralVxs)
+					for (int tindex : TrigsToChange[v])
 					{
-						int count = 0;
-						for (int tindex : TrigsToChange[v])
+						if (triangles[tindex].pile != -1)
+							continue;
+						
+						//get 3 vertices
+						set<int>vxs;
+						vxs.insert(triangles[tindex].v0); vxs.insert(triangles[tindex].v1); vxs.insert(triangles[tindex].v2);
+
+						for (int vx : vxs)
 						{
-							if (triangles[tindex].v0 == vx || triangles[tindex].v1 == vx || triangles[tindex].v2 == vx)
-								count++;
+							if (vx == v0 || vx == v1)
+								continue;
+							TakeVxs.insert(vx);
 						}
-						if (count > 1)
-							neutralRemoves.insert(vx);
 					}
-					for (int vx : neutralRemoves)
+					
+					for (int tindex : OtherTrigs)
 					{
-						neutralVxs.erase(vx);
+						if (triangles[tindex].pile != -1)
+							continue;
+
+						//get 3 vertices
+						set<int>vxs;
+						vxs.insert(triangles[tindex].v0); vxs.insert(triangles[tindex].v1); vxs.insert(triangles[tindex].v2);
+
+						for (int vx : vxs)
+						{
+							if (vx == v0 || vx == v1)
+								continue;
+							DontTakeVxs.insert(vx);
+						}
+					}
+
+					for (int vx : TakeVxs)
+					{
+						if (vx == v0 || vx == v1)	//probably not necessary
+							continue;
+
+						if (DontTakeVxs.find(vx) != DontTakeVxs.end())
+							neutralVxs.insert(vx);
 					}
 
 					//create new trigs
