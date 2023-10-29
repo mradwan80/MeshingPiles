@@ -1342,9 +1342,9 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 				vector<set<int>>TrigsToChange(2);
 				vector<int>newv(2);
 
-				/////////////////////
-				// starting with v0//
-				/////////////////////
+				//////////////////////////////////
+				// finding to be converted trigs//
+				//////////////////////////////////
 
 				for (int v = 0; v < 2; v++)
 				{
