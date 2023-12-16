@@ -1631,7 +1631,7 @@ void CheckConnectedComponents(int pnum, vector<Triangle>& triangles)
 }
 
 //each pile has 8 points. will be added to a vector
-void fillPoints(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, const int left, const int right, float bottom, float top, vector<PointCoordsExt>& points)
+void fillPoints(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, float left, float right, float bottom, float top, vector<PointCoordsExt>& points)
 {
 	for (int pixelIndex = 0; pixelIndex < w * h; pixelIndex++)
 	{

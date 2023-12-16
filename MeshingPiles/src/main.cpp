@@ -31,13 +31,37 @@ void main()
 	int GlobalW = 1024;
 	int GlobalH = 1024;*/
 
-	std::string file_stem = "lion";
+	/*std::string file_stem = "lion";
 	bool reverse = true;
 	double minx, maxx, miny, maxy;
 	minx = 0.0; maxx = 10000.0;
 	miny = 0.0; maxy = 10000.0;
 	int GlobalW = 1024;
-	int GlobalH = 1024;
+	int GlobalH = 1024;*/
+
+	/*std::string file_stem = "dragon2";
+	bool reverse = true;
+	double minx, maxx, miny, maxy;
+	minx = -0.25; maxx = 0.25;
+	miny = -0.25; maxy = 0.25;
+	int GlobalW = 1024;
+	int GlobalH = 1024;*/
+
+	std::string file_stem = "elephant";
+	bool reverse = true;
+	double minx, maxx, miny, maxy;
+	minx = -0.5; maxx = 0.5;
+	miny = -0.5; maxy = 0.5;
+	int GlobalW = 512;
+	int GlobalH = 512;
+
+	/*std::string file_stem = "lucy";
+	bool reverse = true;
+	double minx, maxx, miny, maxy;
+	minx = 0.0; maxx = 100.0;
+	miny = 0.0; maxy = 100.0;
+	int GlobalW = 1024;
+	int GlobalH = 1024;*/
 
 	///////////////////////
 	///////////////////////
