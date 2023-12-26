@@ -2,3 +2,4 @@
 #include "meshing.h"
 
 void readPiles(std::string file_stem, int cellsNum, int& PilesNum, vector<int>& PilesCount, vector<int>& PilesOffset, vector<PileStruct>& Piles);
+void checkPiles(int cellsNum, int& PilesNum, vector<int>& PilesCount, vector<int>& PilesOffset, vector<PileStruct>& Piles);

@@ -9,9 +9,12 @@
 using namespace std;
 
 
+void convert();
 
 void main()
 {
+	//convert();
+	//return;
 
 	//hard coded input
 	/*std::string file_stem = "example9";
@@ -89,6 +92,8 @@ void main()
 		}
 	}
 
+	checkPiles(cellsNum, PilesNum, PilesCount, PilesOffset, Piles);
+
 	//create and fill my own structs. (***) not sure if they are going to be of any importance !!! for now, only good for visualizing original piles
 	vector<vector<PileStruct>>cellsPiles(cellsNum);
 	for (int cell = 0; cell < cellsNum; cell++)
@@ -150,3 +155,171 @@ void main()
 
 }
 
+void convert()
+{
+	struct Point
+	{
+		double x, y, z;
+	};
+
+	struct Pile
+	{
+		double zstart, zend;
+	};
+
+
+
+	//hard coded input
+	//std::string file_stem = "bunny2";
+	//std::string file_stem = "lion";
+	//std::string file_stem = "dragon2";
+	//std::string file_stem = "lucy";
+	std::string file_stem = "elephant";
+	double minx, maxx, miny, maxy;
+	int GlobalW = 1024;
+	int GlobalH = 1024;
+
+	vector<vector<vector<Pile>>>Grid;
+	Grid.resize(GlobalW);
+	for (int i = 0; i < GlobalW; i++) Grid[i].resize(GlobalH);
+
+	int cellsNum = GlobalW * GlobalH;
+
+	double cellW;
+	double cellH;
+
+	vector<Point> points;
+
+
+	std::string ifilename = "inputs//ply//" + file_stem + "_raw_piles.txt";
+	ifstream ifile(ifilename.c_str(), std::ios_base::in);
+	int pnum, tnum;
+	{
+		double x, y, z;
+		double minx1, minx2, miny1, miny2;
+		minx1 = std::numeric_limits<double>::max();
+		minx2 = std::numeric_limits<double>::max();
+		miny1 = std::numeric_limits<double>::max();
+		miny2 = std::numeric_limits<double>::max();
+
+		maxx = std::numeric_limits<double>::lowest();
+		maxy = std::numeric_limits<double>::lowest();
+
+		ifile >> pnum >> tnum;
+
+		points.resize(pnum);
+
+		for (int p = 0; p < pnum; p++)
+		{
+			ifile >> x >> y >> z;
+
+
+			if (x > maxx)
+				maxx = x;
+			if (y > maxy)
+				maxy = y;
+
+			if (x < minx1)
+			{
+				minx2 = minx1;
+				minx1 = x;
+			}
+			else if (x < minx2 && x != minx1)
+			{
+				minx2 = x;
+			}
+
+			if (y < miny1)
+			{
+				miny2 = miny1;
+				miny1 = y;
+			}
+			else if (y < miny2 && y != miny1)
+			{
+				miny2 = y;
+			}
+
+			points[p].x = x;
+			points[p].y = y;
+			points[p].z = z;
+		}
+
+		minx = minx1;
+		miny = miny1;
+
+		cellW = minx2 - minx1;
+		cellH = miny2 - miny1;
+
+		ifile.close();
+	}
+
+	ifile.open(ifilename.c_str(), std::ios_base::in);
+	int PilesNum = 0;
+	{
+		ifile >> pnum >> tnum;
+
+		double x, y, z;
+		for (int p = 0; p < pnum / 8; p++)
+		{
+			ifile >> x >> y >> z;
+
+			double z1 = z;
+
+			int gridx = (x - minx) / cellW + 0.5;
+			int gridy = (y - miny) / cellH + 0.5;
+
+
+			ifile >> x >> y >> z;
+			ifile >> x >> y >> z;
+			ifile >> x >> y >> z;
+			ifile >> x >> y >> z;
+
+			double z2 = z;
+
+			Pile pile;
+			if (z1 < z2)
+			{
+				pile.zstart = z1;
+				pile.zend = z2;
+			}
+			else
+			{
+				pile.zstart = z2;
+				pile.zend = z1;
+			}
+
+
+
+			ifile >> x >> y >> z;
+			ifile >> x >> y >> z;
+			ifile >> x >> y >> z;
+
+
+			Grid[gridx][gridy].push_back(pile);
+
+			PilesNum++;
+		}
+	}
+
+
+	{
+
+		std::string ofilename = "inputs//" + file_stem + ".txt";
+		ofstream ofile(ofilename.c_str(), std::ios_base::out);
+		//write header
+		ofile << PilesNum << "\n";
+
+		for (int j = 0; j < GlobalH; j++)
+		{
+			for (int i = 0; i < GlobalW; i++)
+			{
+				for (int p = 0; p < Grid[i][j].size(); p++)
+				{
+					int cell = j * GlobalW + i;
+					ofile << Grid[i][j][p].zstart << " " << Grid[i][j][p].zend << " " << cell << "\n";
+				}
+			}
+		}
+	}
+
+}

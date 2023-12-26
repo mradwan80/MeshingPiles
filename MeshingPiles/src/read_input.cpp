@@ -24,3 +24,20 @@ for (int i = 1; i < cellsNum; i++)
 }
 
 }
+
+void checkPiles(int cellsNum, int& PilesNum, vector<int>& PilesCount, vector<int>& PilesOffset, vector<PileStruct>& Piles)
+{
+	for (int i = 0; i < cellsNum; i++)
+	{
+		if (PilesCount[i] == 0 || PilesCount[i] == 1)
+			continue;
+
+		for (int p = 0; p < PilesCount[i] - 1; p++)
+		{
+			int pileIndex = PilesOffset[i] + p;
+			if (Piles[pileIndex].end == Piles[pileIndex + 1].start)
+				pileIndex = pileIndex;
+		}
+	}
+
+}
