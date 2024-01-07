@@ -1358,6 +1358,11 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 					set<int> TakeVxs;
 					set<int> DontTakeVxs;
 
+					//for taken vxs. will be used if turned neutral (for new trigs).
+					//p.s. can also fill with the pile&face of the dontTake trigs. it is just important that new trigs are assigned some pile&face other than -1,-1 if not coming from a non top/bottom trig
+					map<int, int> VxPile;
+					map<int, int> VxFace;
+
 					set<int>group0; set<int>group1; set<int>group2; set<int>group3;
 
 					//create new vertex
@@ -1410,6 +1415,8 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 							if (vx == v0 || vx == v1)
 								continue;
 							TakeVxs.insert(vx);
+							VxPile.insert(std::make_pair(vx, triangles[t].pile));
+							VxFace.insert(std::make_pair(vx, triangles[t].face));
 						}
 					}
 					for (int t : group3)
@@ -1424,6 +1431,8 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 							if (vx == v0 || vx == v1)
 								continue;
 							TakeVxs.insert(vx);
+							VxPile.insert(std::make_pair(vx, triangles[t].pile));
+							VxFace.insert(std::make_pair(vx, triangles[t].face));
 						}
 					}
 
@@ -1497,6 +1506,8 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 							if (vx == v0 || vx == v1)
 								continue;
 							TakeVxs.insert(vx);
+							VxPile.insert(std::make_pair(vx, triangles[tindex].pile)); // always -1 !!!
+							VxFace.insert(std::make_pair(vx, triangles[tindex].face)); // also always -1 (top/bottom face)
 						}
 					}
 					
@@ -1527,13 +1538,26 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 					}
 
 					//create new trigs
+					vxToTrigs.resize(vxToTrigs.size() + 2);
 					for (int vx : neutralVxs)
 					{
 						Triangle t;
 						t.v0 = vertex;
 						t.v1 = newv[v];
 						t.v2 = vx;
+
+						//I don't think it is possible we don't find an entry in these conditions. a neutral vx is also a taken vx, and every taken vx has a pile and face in the maps
+						if (VxPile.find(vx) != VxPile.end())
+							t.pile = VxPile[vx];
+						if (VxFace.find(vx) != VxFace.end())
+							t.face = VxFace[vx];
+
 						triangles.push_back(t);
+
+						int tindex = triangles.size() - 1;
+						vxToTrigs[vertex].push_back(tindex);
+						vxToTrigs[newv[v]].push_back(tindex);
+						vxToTrigs[vx].push_back(tindex);
 					}
 				}
 			
