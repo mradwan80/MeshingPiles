@@ -107,7 +107,7 @@ void main()
 
 	//visualize piles//
 	visualizeOriginalPiles(file_stem, GlobalW, GlobalH, cellW, cellH, cellsPiles, PilesNum, cellsNum, minx, maxx, miny, maxy);
-	cout << "wirting original piles finished\n";
+	cout << "writing original piles finished\n";
 	//return;
 
 	//continue filling my structs

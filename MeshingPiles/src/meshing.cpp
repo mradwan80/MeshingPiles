@@ -318,6 +318,7 @@ void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, co
 	int vnum = pnum * 8;
 	int tnum = 0;
 
+	fixPilesStartsAndEnds(w, h, pixels, Piles);
 
 	//starting to use points
 	points.reserve(pnum);
@@ -392,6 +393,134 @@ void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, co
 
 }
 
+void fixPilesStartsAndEnds(int w, int h, vector<Pixel>& pixels, vector<PileStruct>& Piles)
+{
+	float tinyOffset = Piles[0].end - Piles[0].start;
+	for (int pileIndex = 1; pileIndex < Piles.size(); pileIndex++)
+	{
+		float offset = Piles[pileIndex].end - Piles[pileIndex].start;
+		if (offset < tinyOffset)
+			tinyOffset = offset;
+	}
+	tinyOffset /= 1000;
+
+	for (int pixelIndex = 0; pixelIndex < pixels.size(); pixelIndex++)
+	{
+
+		if (!pixels[pixelIndex].ContainsPiles())
+			continue;
+
+		int pixelPilesOffset = pixels[pixelIndex].PilesOffset;
+
+		//fill nb piles from nb pixels 
+		vector<int>pixelsDirect;
+		vector<int>pixelsCross;
+		pixels[pixelIndex].GetDirectNbs(pixels, w, h, pixelsDirect, true);
+		pixels[pixelIndex].GetCrossNbs(pixels, w, h, pixelsDirect, true);
+
+		vector<int>nbPiles;
+		for (auto nbpixel : pixelsDirect)
+		{
+			if (!pixels[nbpixel].ContainsPiles())
+				continue;
+
+			for (int nbpile = pixels[nbpixel].PilesOffset; nbpile < pixels[nbpixel].PilesOffset + pixels[nbpixel].PilesCount; nbpile++)
+			{
+				nbPiles.push_back(nbpile);
+			}
+		}
+		for (auto nbpixel : pixelsCross)
+		{
+			if (!pixels[nbpixel].ContainsPiles())
+				continue;
+
+			for (int nbpile = pixels[nbpixel].PilesOffset; nbpile < pixels[nbpixel].PilesOffset + pixels[nbpixel].PilesCount; nbpile++)
+			{
+				nbPiles.push_back(nbpile);
+			}
+		}
+		for (int nbpile = pixels[pixelIndex].PilesOffset; nbpile < pixels[pixelIndex].PilesOffset + pixels[pixelIndex].PilesCount; nbpile++)
+		{
+			nbPiles.push_back(nbpile);
+		}
+
+
+		for (int pilePixelIndex = 0; pilePixelIndex < pixels[pixelIndex].PilesCount; pilePixelIndex++) //go through each pile of the pixel
+		{
+
+			int pileIndex = pixelPilesOffset + pilePixelIndex;
+			int vxoffset = 8 * pileIndex;
+
+			float zstart = Piles[pileIndex].start;
+			float zend = Piles[pileIndex].end;
+
+			bool fixStart = false;
+			bool fixEnd = false;
+			for (int nbpileVectorIndex = 0; nbpileVectorIndex < nbPiles.size(); nbpileVectorIndex++)
+			{
+				int nbpileIndex = nbPiles[nbpileVectorIndex];
+
+				if (nbpileIndex == pileIndex)
+					continue;
+
+				if (Piles[nbpileIndex].end == zstart)
+					fixStart = true;
+				if (Piles[nbpileIndex].start == zend)
+					fixEnd = true;
+
+			}
+
+			if (fixStart)
+			{
+				float nextDepth = zend;
+
+				for (int nbpileVectorIndex = 0; nbpileVectorIndex < nbPiles.size(); nbpileVectorIndex++)
+				{
+					int nbpileIndex = nbPiles[nbpileVectorIndex];
+
+					if (nbpileIndex == pileIndex)
+						continue;
+
+					if (Piles[nbpileIndex].start > zstart && Piles[nbpileIndex].start < nextDepth)
+						nextDepth = Piles[nbpileIndex].start;
+
+					if (Piles[nbpileIndex].end > zstart && Piles[nbpileIndex].end < nextDepth)
+						nextDepth = Piles[nbpileIndex].end;
+				}
+
+				if (Piles[pileIndex].start + tinyOffset < nextDepth)
+					Piles[pileIndex].start += tinyOffset;
+				else
+					Piles[pileIndex].start += (nextDepth - Piles[pileIndex].start) / 2;
+			}
+
+			if (fixEnd)
+			{
+				float nextDepth = zstart;
+
+				for (int nbpileVectorIndex = 0; nbpileVectorIndex < nbPiles.size(); nbpileVectorIndex++)
+				{
+					int nbpileIndex = nbPiles[nbpileVectorIndex];
+
+					if (nbpileIndex == pileIndex)
+						continue;
+
+					if (Piles[nbpileIndex].start < zend && Piles[nbpileIndex].start > nextDepth)
+						nextDepth = Piles[nbpileIndex].start;
+
+					if (Piles[nbpileIndex].end < zend && Piles[nbpileIndex].end > nextDepth)
+						nextDepth = Piles[nbpileIndex].end;
+				}
+
+				if (Piles[pileIndex].end - tinyOffset > nextDepth)
+					Piles[pileIndex].start -= tinyOffset;
+				else
+					Piles[pileIndex].start -= (Piles[pileIndex].end - nextDepth) / 2;
+			}
+		}
+	}
+
+}
 //idea: moave to another vector, along with their indices. define how to compare (x,y,z) then index. sort. search for duplicates, all refer to first.
 void findDuplicates(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, vector<int>& firstOccurance)
 {

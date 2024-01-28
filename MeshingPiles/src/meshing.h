@@ -106,6 +106,8 @@ struct TrigEdge
 //specific for ortho projection//
 void MeshPiles(vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, float left, float right, float bottom, float top, vector<PointCoordsExt>& points, vector<Triangle>& triangles);
 
+void fixPilesStartsAndEnds(int w, int h, vector<Pixel>& pixels, vector<PileStruct>& Piles);
+
 //idea: moave to another vector, along with their indices. define how to compare (x,y,z) then index. sort. search for duplicates, all refer to first.
 void findDuplicates(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, vector<int>& firstOccurance);
 
