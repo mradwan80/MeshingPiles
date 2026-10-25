@@ -2,7 +2,7 @@
 
 void visualizeOriginalPiles(std::string file_stem, int GlobalW, int GlobalH, double cellW, double cellH, vector<vector<PileStruct>>cellsPiles, int PilesNum, int cellsNum, double minx, double maxx, double miny, double maxy)
 {
-	std::string oplyfilename = "outputs//" + file_stem + "_piles.ply";
+	std::string oplyfilename = "C://Work//data//OFF//piles//meshed//" + file_stem + "_piles_" + std::to_string(GlobalH) + ".ply";
 	ofstream oplyfile(oplyfilename.c_str(), std::ios_base::out);
 	//write header
 	oplyfile << "ply\n";
@@ -78,10 +78,10 @@ void visualizeOriginalPiles(std::string file_stem, int GlobalW, int GlobalH, dou
 	oplyfile.close();
 }
 
-void writeOutput(std::string file_stem, vector<PointCoordsExt> points, vector<Triangle> triangles)
+void writeOutput(std::string file_stem, vector<PointCoordsExt> points, vector<Triangle> triangles, int w)
 {
 
-	std::string ofilename = "outputs//" + file_stem + "_mesh.ply";
+	std::string ofilename = "C://Work//data//OFF//piles//meshed//" + file_stem + "_mesh_" + std::to_string(w) + ".ply";
 	ofstream ofile(ofilename.c_str(), std::ios_base::out);
 	//write header
 	ofile << "ply\n";

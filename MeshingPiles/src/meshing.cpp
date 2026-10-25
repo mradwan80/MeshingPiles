@@ -513,15 +513,15 @@ void fixPilesStartsAndEnds(int w, int h, vector<Pixel>& pixels, vector<PileStruc
 				}
 
 				if (Piles[pileIndex].end - tinyOffset > nextDepth)
-					Piles[pileIndex].start -= tinyOffset;
+					Piles[pileIndex].end -= tinyOffset;
 				else
-					Piles[pileIndex].start -= (Piles[pileIndex].end - nextDepth) / 2;
+					Piles[pileIndex].end -= (Piles[pileIndex].end - nextDepth) / 2;
 			}
 		}
 	}
 
 }
-//idea: moave to another vector, along with their indices. define how to compare (x,y,z) then index. sort. search for duplicates, all refer to first.
+//idea: move to another vector, along with their indices. define how to compare (x,y,z) then index. sort. search for duplicates, all refer to first.
 void findDuplicates(vector<PointCoordsExt>& points, vector<PileStruct>& Piles, vector<Pixel>& pixels, const int w, const int h, vector<int>& firstOccurance)
 {
 	for (int p = 0; p < points.size(); p++)
@@ -1499,7 +1499,7 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 					points.push_back(points[vertex]);
 
 					int pile0 = -1, pile1 = -1;
-					for (int vt = 0; vt < vxToTrigs[vertex].size(); vt++)
+					for (int vt = 0; vt < vxToTrigs[vertex].size(); vt++) //find the two piles that contain te vertex
 					{
 						int tindex = vxToTrigs[vertex][vt];
 						if (triangles[tindex].pile == -1)
@@ -1513,7 +1513,7 @@ void FixNonManifoldsNew(vector<PointCoordsExt>& points, vector<Triangle>& triang
 							pile0 = pile0;
 					}
 
-					for (int vt = 0; vt < vxToTrigs[vertex].size(); vt++)
+					for (int vt = 0; vt < vxToTrigs[vertex].size(); vt++) //group each triangle, by which pile it belongs to, and which face(?!) 
 					{
 						int tindex = vxToTrigs[vertex][vt];
 						if (triangles[tindex].pile != -1)

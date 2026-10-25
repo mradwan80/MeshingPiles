@@ -80,7 +80,7 @@ void main()
 	int PilesNum;
 
 	//read points, and calc other vars
-	readPiles(file_stem, cellsNum, PilesNum, PilesCount, PilesOffset, Piles); //in future, should read points, and compute DDS
+	readPiles(file_stem, cellsNum, PilesNum, PilesCount, PilesOffset, Piles, GlobalW); //in future, should read points, and compute DDS
 
 	if (reverse)
 	{
@@ -134,7 +134,7 @@ void main()
 	cout << "meshing finished\n";
 
 	//write output
-	writeOutput(file_stem, points, triangles);
+	writeOutput(file_stem, points, triangles, GlobalW);
 	cout << "wirting output piles finished\n";
 
 
